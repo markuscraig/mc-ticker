@@ -1,5 +1,33 @@
 body {
-    background-color: #EEEEEE;
+  background-color: #EEEEEE;
+}
+
+h1 {
+	font-size: 20px;
+}
+
+#scrolling_text {
+	margin-left: 100%;
+	white-space: nowrap;
+	font-family: "Pacifico";
+	font-size: 120px;
+	color: #5555CC;
+	text-shadow: 6px 6px 3px #aaaaaa; /* x, y, blur, color */
+
+
+    -webkit-animation-duration: 20s;
+    -webkit-animation-delay: 1s;
+    -webkit-animation-iteration-count: infinite;
+    animation-duration: 20s;
+    animation-delay: 1s;
+    animation-iteration-count: infinite;
+    -moz-animation-duration: 20s;
+    -moz-animation-delay: 1s;
+    -moz-animation-iteration-count: infinite;
+    -o-animation-duration: 20s;
+    -o-animation-delay: 1s;
+    -o-animation-iteration-count: infinite;
+
 }
 
 ticker {

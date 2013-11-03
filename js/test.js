@@ -1,9 +1,11 @@
-$(document).ready(function() {
+$(function() {
 	// initialize the ticker with options
 	McTicker.init({
 		"googleFontFamily": "Pacifico",
 		"fontSize": "144px"
 	});
+
+   $('#scrolling_text').addClass('animated slideOutLeft');
 
 	/*
 	** Other Google Font Families...

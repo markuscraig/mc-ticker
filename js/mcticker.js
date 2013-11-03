@@ -1,4 +1,4 @@
-var McTicker = function() {
+var McTicker = McTicker || function() {
     // default settings
     var settings = {
         "googleFontFamily": "Henny Penny",
@@ -13,12 +13,14 @@ var McTicker = function() {
     var pixelsPerInterval = speedPixelsPerSec / 60;
     var tickerWidth = window.innerWidth;
     var tickerHeight = 600;
-    var text = "Howdy, this demo shows a line of ticker text smoothly scrolling on an HTML5 canvas element using Google WebFonts converted to canvas pixel data at run-time and rendered using the WebKit animation frame callbacks. M";
+    var text = "Howdy, this demo shows a line of ticker text smoothly scrolling using an HTML5 canvas element rendering Google WebFonts which are converted to HTML5 canvas pixel data at run-time which is then being translated using the WebKit CSS3 hardware transforms. -- Mark";
     var tickerId = "ticker";
     
     // ticker element variables
     var ticker;
     var context;
+    var offScreenCanvas;
+    var offScreenContext;
 
     // reset the control variables
     var highResCurrentX = 0;
@@ -43,11 +45,11 @@ var McTicker = function() {
     */
 
     // determine the browser's 'request animation frame' method
-    reqAnimFrame = window.mozRequestAnimationFrame    ||
+    reqAnimFrame = window.requestAnimationFrame ||
+                   window.mozRequestAnimationFrame ||
                    window.webkitRequestAnimationFrame ||
-                   window.msRequestAnimationFrame     ||
+                   window.msRequestAnimationFrame ||
                    window.oRequestAnimationFrame;
-
 
     function isGoogleFont() {
         return (settings.googleFontFamily && (settings.googleFontFamily !== "")) ? true : false;
@@ -86,25 +88,110 @@ var McTicker = function() {
         context.shadowBlur = 3;
         metrics = context.measureText(text);
         
-        var tmpCanvas = document.createElement('canvas');
-        tmpCanvas.width = metrics.width + 20;
-        tmpCanvas.height = ticker.height;
-        tmpContext = tmpCanvas.getContext("2d");
-        tmpContext.font = getFontString();
-        tmpContext.fillStyle = '#5555CC';
-        tmpContext.shadowColor = "#aaaaaa";
-        tmpContext.shadowOffsetX = 4;
-        tmpContext.shadowOffsetY = 4;
-        tmpContext.shadowBlur = 3;
-        tmpContext.fillText(text, 0, tmpCanvas.height / 2);
-        tickerImageData = tmpContext.getImageData(0, 0, tmpCanvas.width, tmpCanvas.height);
+        /*
+        offScreenCanvas = document.createElement('canvas');
+        offScreenCanvas.width = metrics.width + 20;
+        offScreenCanvas.height = ticker.height;
+        offScreenContext = offScreenCanvas.getContext("2d");
+        offScreenContext.font = getFontString();
+        offScreenContext.fillStyle = '#5555CC';
+        offScreenContext.shadowColor = "#aaaaaa";
+        offScreenContext.shadowOffsetX = 4;
+        offScreenContext.shadowOffsetY = 4;
+        offScreenContext.shadowBlur = 3;
+        offScreenContext.fillText(text, 0, offScreenCanvas.height / 2);
+        tickerImageData = offScreenContext.getImageData(0, 0, offScreenCanvas.width, offScreenCanvas.height);
+        */
+
+
+
+
+
+        canvas = document.getElementById('ticker');
+        canvas.style.marginLeft = "100%";
+        canvas.width = metrics.width + 20;
+        canvas.height = ticker.height;
+        offScreenContext = canvas.getContext("2d");
+        offScreenContext.font = getFontString();
+        offScreenContext.fillStyle = '#5555CC';
+        offScreenContext.shadowColor = "#aaaaaa";
+        offScreenContext.shadowOffsetX = 4;
+        offScreenContext.shadowOffsetY = 4;
+        offScreenContext.shadowBlur = 3;
+        offScreenContext.fillText(text, 0, canvas.height / 2);
+        tickerImageData = offScreenContext.getImageData(0, 0, canvas.width, canvas.height);
+
+        var pixelsPerSec = 450;
+        var animationSec = metrics.width / pixelsPerSec;
+        move('#ticker')
+            .ease('linear')
+            .to(-(metrics.width + tickerWidth), 0)
+            //.rotate(10)
+            //.scale(5.5)
+            //.set('background-color', '#888')
+            //.set('border-color', 'black')
+            .duration("" + animationSec + "s")
+            //.skew(45, 0)
+            .then()
+                .set('opacity', 0)
+                .duration('3.0s')
+                .scale(1.0)
+                .pop()
+            .end();
+
+
+
+
+
+
+
 
         // set the initial ticker text position
         highResCurrentX = ticker.width;
         currentY = 0;
 
         // kick-off the animation        
-        animate();
+        //reqAnimFrame(animate);
+        
+        currentX = 0;
+        currentY = 0;
+        highResCurrentX = 0;
+        //reqAnimFrame(render);
+        
+        reqAnimFrame(dummyRender)
+    }
+
+    function dummyRender() {
+        reqAnimFrame(dummyRender);        
+    }
+
+    function render() {
+        // re-request the animation frame callback
+        reqAnimFrame(render);
+
+
+        //imageSliceData = offScreenContext.getImageData(currentX, 0, ticker.width, ticker.height);
+        //context.putImageData(imageSliceData, 100, 100);
+
+        highResCurrentX += pixelsPerInterval;
+        var highResFloorX = Math.floor(highResCurrentX);
+        if (currentX != highResFloorX) {
+            currentX = highResFloorX;
+
+            // redraw the ticker bitmap
+            context.clearRect(0, 0, ticker.width, ticker.height);
+            context.putImageData(tickerImageData, -highResFloorX, 0, highResFloorX, 0, ticker.width, ticker.height);
+
+            // wrap the x position when the entire line has scrolled through
+            if (highResCurrentX > metrics.width) {
+                highResCurrentX = 0;
+            }
+        }
+
+        //context.putImageData(tickerImageData, currentX, 0, 0, 0, ticker.width, ticker.height);
+        //context.drawImage(tickerImageData, 0, 0, ticker.width, ticker.height, currentX, 0, ticker.width, ticker.height);
+
+        //currentX -= pixelsPerInterval;
     }
 
     function animate() {
@@ -143,7 +230,7 @@ var McTicker = function() {
                 currentX = highResFloorX;
 
                 // redraw the ticker bitmap
-                draw();
+                draw_orig();
             }
 
             // wrap the x position when the entire line has scrolled through
@@ -161,7 +248,7 @@ var McTicker = function() {
         reqAnimFrame(animate);
     }
     
-    function draw() {
+    function draw_orig() {
         context.clearRect(0, 0, ticker.width, ticker.height);
         context.putImageData(tickerImageData, currentX, currentY);
     }
